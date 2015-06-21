@@ -1,29 +1,19 @@
 package controllers
 
+import model.Transaction
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import play.api.mvc.{Controller, Action}
 
-
-case class Transaction(id: Option[Long], body: String)
+import scala.concurrent.Future
+import play.api.libs.concurrent.Execution.Implicits._
 
 case class Error(code: Int, message: String)
+
 //JsValue is the result of a Json.toJson(_) application, therefore we can put anything in there
 //JsValue can be also JsNull, so it absorbs the Option features
 case class Response(result: JsValue, error: Option[Error])
 
-object Transaction {
-  //convenience converters
-  implicit def toOption(s: String): Option[String] = Some(s)
-  implicit def toOption(l: Long): Option[Long] = Some(l)
-
-  implicit val transactionFormat: Format[Transaction] = (
-    (__ \ "id").formatNullable[Long] ~
-    (__ \ "body").format[String]
-    )(Transaction.apply, unlift(Transaction.unapply))
-}
-
-//TODO: use only writers, formats are overkill for Response
 object Response {
   implicit val responseFormat: Format[Response] = (
     (__ \ "result").format[JsValue] ~
@@ -49,30 +39,35 @@ object ErrorResponse {
   def apply(code: Int, message: String) = Response(JsNull, Some(Error(code, message)))
 }
 
+
 class Transactions extends Controller {
   import play.api.Logger
-  import Transaction._
+  import model.Transaction
+  import model.Transaction._
 
   val logger = Logger(getClass)
-  var transactions: Seq[Transaction] = List(Transaction(1L, "you must pay"))
 
-  def list = Action { request =>
-    Ok(Json.toJson(SuccessResponse(transactions)))
+  //return a future of HTTPREsponse, make it async
+  def list = Action.async { request =>
+    val txFuture = Transaction.list
+    txFuture.map(txList => Ok(Json.toJson(SuccessResponse(txList))))
   }
 
-  def findById(id: String) = Action {
+  def findById(id: String) = Action.async {
     logger.info(s"findById($id)")
-    logger.info(transactions.find(_.id == Some(id.toLong)).toString)
 
-    transactions.find(_.id == Some(id.toLong)).fold {
-      NotFound(Json.toJson(ErrorResponse(1, "Transaction not found")))
-    } {
-      tx => Ok(Json.toJson(SuccessResponse(tx)))
-    }
+    val txById = Transaction.findById(id.toLong)
+
+    txById.map( txOption => txOption.fold {
+        NotFound(Json.toJson(ErrorResponse(1, "Transaction not found")))
+      } {
+        tx => Ok(Json.toJson(SuccessResponse(tx)))
+      }
+    )
   }
 
   //how to parse request body. this default json parsers works with any body < 512K
-  def create = Action(parse.json) { request =>
+  def create = Action.async(parse.json) { request =>
 
     //JsResult is kind of Option, wrapping the object derived from parsing
     val incomingBody: JsResult[Transaction] = request.body.validate[Transaction]
@@ -81,14 +76,13 @@ class Transactions extends Controller {
       invalid = {
         error => {
           val errorMessage = s"Invalid Json, does not represent a transaction. $error"
-          BadRequest(Json.toJson(ErrorResponse(0, errorMessage)))
+          Future.successful(BadRequest(Json.toJson(ErrorResponse(0, errorMessage))))
         }
       },
       valid = { tx =>
           logger.info("Creating transaction: " + tx)
-
-          val createdTx: Transaction = tx
-        Created(Json.toJson(SuccessResponse(createdTx)))
+          val createdTx: Future[Transaction] = Transaction.create(tx)
+          createdTx.map(createdTxValue => Created(Json.toJson(SuccessResponse(createdTxValue))))
     })
 
   }

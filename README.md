@@ -1,4 +1,5 @@
 My first attempt of creating a CRUD application using Play 2.4 and Slick 3.0
+Inspiration: http://semisafe.com/coding/2015/06/12/play_basics_database_access.html
 
 What I've learned so far:
 
