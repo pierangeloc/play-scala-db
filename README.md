@@ -11,3 +11,5 @@ What I've learned so far:
 * `jsValue.as[T](implicit reads: Reads[T])`
 * `jsValue.asOpt[T](implicit reads: Reads[T])`
 
+I decided to persist some events on MongoDb, using ReactiveMongo, but it turns out that ReactiveMongo for Play 2.4 hasn't been yet released. Therefore I'll revert 
+the Play project to use Play 2.3.
