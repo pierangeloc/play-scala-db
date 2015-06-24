@@ -1,4 +1,4 @@
-name := """playing-scala-mongo"""
+name := """play-scala-mongo"""
 
 version := "1.0-SNAPSHOT"
 
@@ -6,15 +6,16 @@ lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
 scalaVersion := "2.11.1"
 
-libraryDependencies ++= Seq(jdbc, anorm, cache, ws)
-
+resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"
 resolvers += "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"
 
-libraryDependencies ++= Seq(
-  "org.reactivemongo" 		%% 	"play2-reactivemongo" 		% "0.11.0-SNAPSHOT",
-  "org.webjars" 			%% 	"webjars-play" 				% "2.3.0",
-  "org.webjars" 			%	"bootstrap" 				% "3.1.1-1",
-  "org.webjars" 			% 	"bootswatch-united"			% "3.1.1",
-  "org.webjars" 			% 	"html5shiv" 				% "3.7.0",
-  "org.webjars" 			% 	"respond" 					% "1.4.2"
-)
+libraryDependencies ++= Seq( ws,
+                            anorm,
+                            cache,
+                            "org.reactivemongo" %% "play2-reactivemongo" % "0.10.5.0.akka23"
+                          )
+
+
+// Play provides two styles of routers, one expects its actions to be injected, the
+// other, legacy style, accesses its actions statically.
+//routesGenerator := InjectedRoutesGenerator

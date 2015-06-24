@@ -2,17 +2,9 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
-# Home page
-GET         /                            controllers.Application.index
-
 # Map static resources from the /public folder to the /assets URL path
 GET         /assets/*file                controllers.Assets.versioned(path="/public", file: Asset)
-
 
 GET         /api/transactions            controllers.Transactions.list
 GET         /api/transactions/:id        controllers.Transactions.findById(id)
 POST        /api/transactions            controllers.Transactions.create
-
-GET         /api/events                  controllers.Events.list
-GET         /api/events/:id              controllers.Transactions.findById(id)
-POST        /api/events                  controllers.Transactions.create

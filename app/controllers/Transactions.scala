@@ -3,6 +3,8 @@ package controllers
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import play.api.mvc.{Controller, Action}
+import play.modules.reactivemongo.json.collection.JSONCollection
+import play.modules.reactivemongo.{ReactiveMongoPlugin, MongoController}
 
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits._
@@ -42,12 +44,14 @@ object ErrorResponse {
 }
 
 
-class Transactions extends Controller {
+object Transactions extends Controller with MongoController {
   import play.api.Logger
   import model.Transaction
   import model.Transaction._
 
   val logger = Logger(getClass)
+
+  def myCollection = db.collection[JSONCollection]("transactions")
 
   //return a future of HTTPREsponse, make it async
   def list = Action.async { request =>
