@@ -30,13 +30,8 @@ object Transaction {
     )(Transaction.apply, unlift(Transaction.unapply))
 
 
-  def create[T: Format](event: T) = {
-    val format = implicitly[Format[T]]
-    collection.insert(format.writes(event))
-  }
-
   def list: Future[Seq[Transaction]] = {
-    val emptyQuery = BSONDocument()
+    val emptyQuery = Json.obj()
     val cursor = collection.find(emptyQuery).cursor[Transaction]
     cursor.collect[List]()
   }
@@ -50,8 +45,7 @@ object Transaction {
 
   def create(tx: Transaction): Future[Transaction] = {
     val incomingTx = transactionFormat.writes(tx)
-    val addMongoId: Reads[JsObject] = __.json.update(generateId)
-    collection.insert(addMongoId.reads(incomingTx)).map(_ => tx)
+    collection.insert(incomingTx).map(_ => tx)
   }
 }
 
